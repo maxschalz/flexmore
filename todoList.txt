@@ -1,0 +1,15 @@
+# Log
+
+## Bugs
+
+## Questions
+- cycamore.Source lines 48-54 what does `pragma cyclus def` do?
+
+## To do
+- check inheritance, should inclue CommodityProducer?
+- control Source::GetMatlBids
+- implement flexibility
+
+## Done
+
+
