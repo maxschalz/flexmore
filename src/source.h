@@ -49,7 +49,7 @@ class Source : public cyclus::Facility,
 
   #pragma cyclus note { \
     "doc":  "A stub facility is provided as a skeleton " \
-            "for the design of new facility agents."
+            "for the design of new facility agents.", \
   }
   
   #pragma cyclus def clone
@@ -113,7 +113,7 @@ class Source : public cyclus::Facility,
   }
   double inventory_size;
 
-  #pragma cyclus var { \
+  #pragma cyclus var { \
     "tooltip": "per time step throughput", \
     "doc": "amount of commodity that can be supplied at each time step", \
     "default": 1e299, \
@@ -126,7 +126,7 @@ class Source : public cyclus::Facility,
 
   #pragma cyclus var { \
     "tooltip": "geographical latitude", \
-    "doc": "Latitude of the agent's geographical position. The ", \
+    "doc": "Latitude of the agent's geographical position. The " \
            "value should be expressed in degrees as a double.", \
     "default": 0.0, \
     "uilabel": "Geographical latitude in degrees as a double", \
@@ -135,7 +135,7 @@ class Source : public cyclus::Facility,
 
   #pragma cyclus var { \
     "tooltip": "geographical longtitude", \
-    "doc": "Longitude of the agent's geographical position. The ", \
+    "doc": "Longitude of the agent's geographical position. The " \
            "value should be expressed in degrees as a double.", \
     "default": 0.0, \
     "uilabel": "Geographical longitude in degrees as a double", \
