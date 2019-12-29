@@ -100,14 +100,44 @@ std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> Source::GetMatlBids(
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Source::Tick() {}
+void Source::GetMatlTrades(
+    const std::vector<cyclus::Trade<cyclus::Material> >& trades,
+    std::vector<std::pair<cyclus::Trade<cyclus::Material>,
+                          cyclus::Material::Ptr> >& responses) {
+  using cyclus::Material;
+  using cyclus::Trade;
+
+  std::vector<cyclus::Trade<cyclus::Material> >::const_iterator it;
+  for(it = trades.begin(); it != trades.end(); ++it) {
+    double qty = it->amt;
+    inventory_sze -= qty;
+
+    Material::Ptr response;
+    if (!outrecipe.empty()) {
+      response = Material::Create(this, qty, context()->GetRecipe(outrecipe));
+    } else {
+      response = Material::Create(this, qty, it->request->target()->comp());
+    }
+    responses.push_back(std::make_pair(*it, response));
+    LOG(cyclus::LEV_INFO5, "Source") << prototype() << " sent an order"
+                                     << " for " << qty << " of " << outcommod;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Source::Tock() {}
+void Source::RecordPosition() {
+  std::string specification = this->spec();
+  context()
+    ->NewDatum("AgentPosition")
+    ->AddVal("Spec", specification)
+    ->AddVal("Prototype", this->prototype())
+    ->AddVal("AgentId", id())
+    ->AddVal("Latitude", latitude)
+    ->AddVal("Longitude", longitude)
+    ->Record();
+}
 
-// WARNING! Do not change the following this function!!! This enables your
-// archetype to be dynamically loaded and any alterations will cause your
-// archetype to fail.
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 extern "C" cyclus::Agent* ConstructSource(cyclus::Context* ctx) {
   return new Source(ctx);
 }

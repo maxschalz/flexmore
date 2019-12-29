@@ -140,7 +140,11 @@ class Source : public cyclus::Facility,
     "default": 0.0, \
     "uilabel": "Geographical longitude in degrees as a double", \
   }
+  double longitude;
 
+  cyclus::toolkit::Position coordinates;
+
+  void RecordPosition();
 };
 
 }  // namespace flexmore
