@@ -1,6 +1,8 @@
 #ifndef CYCLUS_FLEXMORE_SOURCE_H_
 #define CYCLUS_FLEXMORE_SOURCE_H_
 
+#include <set>
+#include <vector>
 #include <string>
 
 #include "cyclus.h"
@@ -31,21 +33,15 @@ namespace flexmore {
 /// describing the behavior at the tick and tock as well as the behavior
 /// upon sending and receiving materials and messages.
 class Source : public cyclus::Facility,
+  public cyclus::toolkit::CommodityProducer,
   public cyclus::toolkit::Position {
+  friend class SourceTest;
  public:
   /// Constructor for Source Class
   /// @param ctx the cyclus context for access to simulation-wide parameters
   explicit Source(cyclus::Context* ctx);
   
   virtual ~Source();
-
-  /// The Prime Directive
-  /// Generates code that handles all input file reading and restart operations
-  /// (e.g., reading from the database, instantiating a new object, etc.).
-  /// @warning The Prime Directive must have a space before it! (A fix will be
-  /// in 2.0 ^TM)
-
-  #pragma cyclus
 
   #pragma cyclus note { \
     "doc":  "A stub facility is provided as a skeleton " \
@@ -61,14 +57,11 @@ class Source : public cyclus::Facility,
   #pragma cyclus def initinv
 
   virtual void InitFrom(Source* m);
-
   virtual void InitFrom(cyclus::QueryableBackend* b);
-
+  virtual void EnterNotify();
   virtual std::string str();
-
   virtual void Tick();
-
-  virtual void Tock();
+  virtual void Tock() {};
   
   virtual std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr>
       GetMatlBids(cyclus::CommodMap<cyclus::Material>::type&
@@ -81,6 +74,12 @@ class Source : public cyclus::Facility,
   );
   
  private:
+  
+  double currentThroughput;
+  
+  void RecordPosition();
+  void SetThroughput();
+  
   #pragma cyclus var { \
     "tooltip": "source output commodity", \
     "doc": "Output commodity on which the source offers material.", \
@@ -112,17 +111,21 @@ class Source : public cyclus::Facility,
     "units" : "kg", \
   }
   double inventory_size;
-
-  #pragma cyclus var { \
-    "tooltip": "per time step throughput", \
-    "doc": "amount of commodity that can be supplied at each time step", \
-    "default": 1e299, \
-    "uilabel": "Maximum Throughput", \
-    "uitype": "range", \
-    "range": [0.0, 1e299], \
+  
+  #pragma cyclus var { \
+    "tooltip": "throughput list", \
+    "doc": "amount of commodity that can be supplied at each time step"\
+           "and where each entry of the list is only valid for one time"\
+           "step. If there is only one element in the list, then this value"\
+           "is used for all timesteps, else, the length of the list has to "\
+           "be identical with the duration of the simulation. Moreover, "\
+           "all values have to be positive or zero.", \
+    "default": [1e299], \
+    "uilabel": "Maximum throughput list", \
+    "uitype": "oneormore", \
     "units": "kg/time step", \
   }
-  double throughtput;
+  std::vector<double> throughput;
 
   #pragma cyclus var { \
     "tooltip": "geographical latitude", \
@@ -141,10 +144,8 @@ class Source : public cyclus::Facility,
     "uilabel": "Geographical longitude in degrees as a double", \
   }
   double longitude;
-
+  
   cyclus::toolkit::Position coordinates;
-
-  void RecordPosition();
 };
 
 }  // namespace flexmore

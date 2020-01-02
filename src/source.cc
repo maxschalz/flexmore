@@ -5,17 +5,18 @@
 
 namespace flexmore {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Source::Source(cyclus::Context* ctx) :
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Source::Source(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
-      throughput(std::numeric_limits<double>::max()),
+      throughput(std::vector<double>(1, std::numeric_limits<double>::max())),
       inventory_size(std::numeric_limits<double>::max()),
       latitude(0.0),
       longitude(0.0),
-      coordinates(latitude, longtitude) {}
+      coordinates(0.0, 0.0) {}
 
 Source::~Source() {}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Source::InitFrom(Source* m) {
   #pragma cyclus impl initfromcopy flexmore::Source
   cyclus::toolkit::CommodityProducer::Copy(m);
@@ -23,16 +24,49 @@ void Source::InitFrom(Source* m) {
 }
 
 void Source::InitFrom(cyclus::QueryableBackend* b) {
-  #pragma cyclus impl inifromdb flexmore::Source
-  namespace tk = cyclus::toolkij;
+  #pragma cyclus impl initfromdb flexmore::Source
+  namespace tk = cyclus::toolkit;
   tk::CommodityProducer::Add(
     tk::Commodity(outcommod),
-    tk::CommodInfo(throughput, throughput)
+    tk::CommodInfo(currentThroughput, currentThroughput)
   );
   RecordPosition();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Source::EnterNotify() {
+  cyclus::Facility::EnterNotify();
+   
+  int ltime = lifetime() != -1 ?
+      lifetime() : context()->sim_info().duration - enter_time();
+  
+  // if only one throughput is indicated, then expand this to all timesteps
+  if (throughput.size() == 1) {
+    throughput = std::vector<double>(ltime, throughput[0]);
+  }
+
+  // input consistency checks
+  std::stringstream ss;
+  if (throughput.size() != ltime) {
+    ss << "Prototype '" << prototype() << "' has "
+       << throughput.size() << " throughput vals, expected "
+       << ltime << "\n";
+  }
+  for (int i = 0; i < throughput.size(); i++) {
+    if (throughput[i] < 0 ||
+        throughput[i] > std::numeric_limits<double>::max()) {
+      ss << "Prototype '" << prototype() 
+         << "' has invalid value " << throughput[i]
+         << " in position " << i << " of throughput\n";
+    }
+  }
+  
+  if (ss.str().size() > 0) {
+    throw cyclus::ValueError(ss.str());
+  } 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string Source::str() {
   namespace tk = cyclus::toolkit;
   std::stringstream ss;
@@ -45,8 +79,8 @@ std::string Source::str() {
   }
   
   ss << cyclus::Facility::str() << " supplies commodity '" << outcommod
-     << "' with recipe '" << outrecipe << "' at a throughput of"
-     << throughput << " kg per time step commod producer members: "
+     << "' with recipe '" << outrecipe << "' at a current throughput of"
+     << currentThroughput << " kg per time step commod producer members: "
      << " produces " << outcommod << "?: " << ans
      << " throughput: " << tk::CommodityProducer::Capacity(outcommod)
      << " cost: " << tk::CommodityProducer::Cost(outcommod);
@@ -54,7 +88,18 @@ std::string Source::str() {
   return ss.str();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Source::SetThroughput() {
+  int t = context()->time() - enter_time();
+  currentThroughput = throughput[t];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Source::Tick() {
+  SetThroughput();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> Source::GetMatlBids(
     cyclus::CommodMap<cyclus::Material>::type& commod_requests) {
   using cyclus::Bid;
@@ -63,7 +108,7 @@ std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> Source::GetMatlBids(
   using cyclus::Material;
   using cyclus::Request;
 
-  double max_qty = std::min(throughput, inventory_size);
+  double max_qty = std::min(currentThroughput, inventory_size);
   cyclus::toolkit::RecordTimeSeries<double>(
     "supply" + outcommod, this, max_qty
   );
@@ -85,7 +130,7 @@ std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> Source::GetMatlBids(
     Request<Material>* req = *it;
     Material::Ptr target = req->target();
     double qty = std::min(target->quantity(), max_qty);
-    Material::Ptr m = Material::CreateUntracked(qty, context->GetRecipe(outrecipe));
+    Material::Ptr m = Material::CreateUntracked(qty, context()->GetRecipe(outrecipe));
     if (!outrecipe.empty()) {
       m = Material::CreateUntracked(qty, context()->GetRecipe(outrecipe));
     }
@@ -96,10 +141,10 @@ std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> Source::GetMatlBids(
   port->AddConstraint(cc);
   ports.insert(port);
 
-  return ports
+  return ports;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Source::GetMatlTrades(
     const std::vector<cyclus::Trade<cyclus::Material> >& trades,
     std::vector<std::pair<cyclus::Trade<cyclus::Material>,
@@ -110,7 +155,7 @@ void Source::GetMatlTrades(
   std::vector<cyclus::Trade<cyclus::Material> >::const_iterator it;
   for(it = trades.begin(); it != trades.end(); ++it) {
     double qty = it->amt;
-    inventory_sze -= qty;
+    inventory_size -= qty;
 
     Material::Ptr response;
     if (!outrecipe.empty()) {
@@ -124,7 +169,7 @@ void Source::GetMatlTrades(
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Source::RecordPosition() {
   std::string specification = this->spec();
   context()
@@ -137,7 +182,7 @@ void Source::RecordPosition() {
     ->Record();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 extern "C" cyclus::Agent* ConstructSource(cyclus::Context* ctx) {
   return new Source(ctx);
 }
