@@ -118,7 +118,7 @@ class Source : public cyclus::Facility,
            "and where each entry of the list is only valid for one time"\
            "step. If there is only one element in the list, then this value"\
            "is used for all timesteps, else, the length of the list has to "\
-           "be identical with the duration of the simulation. Moreover, "\
+           "be identical to the duration of the simulation. Moreover, "\
            "all values have to be positive or zero.", \
     "default": [1e299], \
     "uilabel": "Maximum throughput list", \
