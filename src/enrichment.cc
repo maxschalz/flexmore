@@ -15,7 +15,6 @@ namespace flexmore {
 Enrichment::Enrichment(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
       tails_assay(0),
-      swu_capacity(std::numeric_limits<double>::max()),
       swu_vector(std::vector<double>(1, std::numeric_limits<double>::max())),
       max_enrich(1),
       initial_feed(0),

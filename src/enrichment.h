@@ -227,6 +227,10 @@ class Enrichment
     inventory.capacity(size);
   }
 
+  inline void SwuCapacity(std::vector<double> capacity) {
+    swu_vector = capacity;
+  }
+  
   inline void SwuCapacity(double capacity) {
     swu_capacity = capacity;
     current_swu_capacity = swu_capacity;
@@ -352,19 +356,7 @@ class Enrichment
            "so that EF chooses higher U235 content first" \
   }
   bool order_prefs;
-
-  #pragma cyclus var { \
-    "default": 1e299, \
-    "tooltip": "SWU capacity (kgSWU/month)", \
-    "uilabel": "SWU Capacity", \
-    "uitype": "range", \
-    "range": [0.0, 1e299], \
-    "doc": "separative work unit (SWU) capacity of enrichment " \
-           "facility (kgSWU/timestep) " \
-  }
-  double swu_capacity;
-  double current_swu_capacity;
-   
+  
   #pragma cyclus var { \
     "tooltip": "SWU list", \
     "doc": "List of separative work unit (SWU) capacities of enrichment" \
@@ -378,16 +370,18 @@ class Enrichment
     "units": "kgSWU/time step", \
   }
   std::vector<double> swu_vector;
-
+  double swu_capacity;
+  double current_swu_capacity;
+ 
+  // Used to total intra-timestep swu and natu usage for 
+  // meeting requests. These help enable time series generation.
+  double intra_timestep_swu_;
+  double intra_timestep_feed_;
+ 
   #pragma cyclus var { 'capacity': 'max_feed_inventory' }
   cyclus::toolkit::ResBuf<cyclus::Material> inventory;  // natural u
   #pragma cyclus var {}
   cyclus::toolkit::ResBuf<cyclus::Material> tails;  // depleted u
-
-  // used to total intra-timestep swu and natu usage for meeting requests -
-  // these help enable time series generation.
-  double intra_timestep_swu_;
-  double intra_timestep_feed_;
 
   friend class EnrichmentTest;
   // ---

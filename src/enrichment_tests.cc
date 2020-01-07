@@ -102,7 +102,7 @@ TEST_F(EnrichmentTest, CheckSWUConstraint) {
     "   <tails_commod>tails</tails_commod> "
     "   <tails_assay>0.003</tails_assay> "
     "   <initial_feed>1000</initial_feed> "
-    "   <swu_capacity>195</swu_capacity> ";
+    "   <swu_vector>  <val>195</val>  </swu_vector> ";
 
   int simdur = 1;
 
@@ -488,7 +488,7 @@ void EnrichmentTest::SetUpSource() {
   src_facility->tails_assay = tails_assay;
   src_facility->max_enrich = max_enrich;
   src_facility->SetMaxInventorySize(inv_size);
-  src_facility->SwuCapacity(swu_capacity);
+  src_facility->SwuCapacity(std::vector<double>(1, swu_capacity));
   src_facility->initial_feed = reserves;
 }
 
@@ -633,7 +633,7 @@ TEST_F(EnrichmentTest, Enrich) {
   cyclus::CompMap v;
   v[922350000] = product_assay;
   v[922380000] = 1 - product_assay;
-  // target qty need not be = to request qty
+  // target qty need not be equal to request qty
   Material::Ptr target = cyclus::Material::CreateUntracked(
       qty + 10, cyclus::Composition::CreateFromMass(v));
 
@@ -643,7 +643,7 @@ TEST_F(EnrichmentTest, Enrich) {
   double tails_qty = TailsQty(qty, assays);
 
   double swu_cap = swu_req * 5;
-  src_facility->SwuCapacity(swu_cap);
+  src_facility->SwuCapacity(std::vector<double>(1, swu_cap));
   src_facility->SetMaxInventorySize(natu_req);
   DoAddMat(GetMat(natu_req / 2));
   DoAddMat(GetMat(natu_req / 2));
@@ -718,8 +718,8 @@ TEST_F(EnrichmentTest, Response) {
   trades.push_back(trade);
 
   // 2 trades, SWU = SWU cap
-    ASSERT_GT(src_facility->SwuCapacity() - 2 * swu_req / 3,
-              -1 * cyclus::eps());
+  ASSERT_GT(src_facility->SwuCapacity() - 2 * swu_req / 3,
+      -1 * cyclus::eps());
   trades.push_back(trade);
   responses.clear();
   EXPECT_NO_THROW(src_facility->GetMatlTrades(trades, responses));
