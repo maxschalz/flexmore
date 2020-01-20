@@ -378,6 +378,7 @@ class Enrichment
   double intra_timestep_swu_;
   double intra_timestep_feed_;
  
+
   #pragma cyclus var { 'capacity': 'max_feed_inventory' }
   cyclus::toolkit::ResBuf<cyclus::Material> inventory;  // natural u
   #pragma cyclus var {}

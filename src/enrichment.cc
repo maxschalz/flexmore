@@ -61,6 +61,9 @@ void Enrichment::Build(cyclus::Agent* parent) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Enrichment::EnterNotify() {
   cyclus::Facility::EnterNotify();
+  
+  intra_timestep_swu_ = 0;
+  intra_timestep_feed_ = 0;
 
   int ltime = lifetime() != -1 ? 
       lifetime() : context()->sim_info().duration - enter_time();
@@ -91,6 +94,7 @@ void Enrichment::EnterNotify() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Enrichment::Tick() {
   int t = context()->time() - enter_time();
+  
   swu_capacity = swu_vector[t];
   current_swu_capacity = swu_vector[t];
 }
