@@ -285,7 +285,7 @@ class Enrichment
     "uitype": "inrecipe" \
   }
   std::string feed_recipe;
-
+  
   #pragma cyclus var { \
     "tooltip": "product commodity",					\
     "doc": "product commodity that the enrichment facility generates",	 \
@@ -301,6 +301,54 @@ class Enrichment
     "uitype": "outcommodity" \
   }
   std::string tails_commod;
+  
+  #pragma cyclus var { \
+    "tooltip": "Commodity change times list", \
+    "doc": "List containing the timesteps at which the feed, product " \
+           "and tails commodities are changed." , \
+    "default" : [], \
+    "uilabel": "Commodity change times list", \
+    "uitype": "oneormore", \
+    "units": "time step", \
+  }
+  std::vector<int> commod_change_times;
+  
+  #pragma cyclus var { \
+    "tooltip": "Feed commodity change list", \
+    "doc": "List containing the feed commodity updates. Same order " \
+           "as the changing times.", \
+    "default": [], \
+    "uilabel": "Feed commodity change list", \
+    "uitype": ["oneormore", "incommodity"], \
+  }
+  std::vector<std::string> feed_commod_change;
+  
+  #pragma cyclus var { \
+    "tooltip": "Product commodity change list", \
+    "doc": "List containing the product commodity updates. Same " \
+           "order as the changing times.", \
+    "default": [], \
+    "uilabel": "Product commodity change list", \
+    "uitype": ["oneormore", "outcommodity"], \
+  }
+  std::vector<std::string> product_commod_change;
+  
+  #pragma cyclus var { \
+    "tooltip": "Tails commodity change list", \
+    "doc": "List containing the tails commodity updates. Same order " \
+           "as the changing times.", \
+    "default": [], \
+    "uilabel": "Tails commodity change list", \
+    "uitype": ["oneormore", "outcommodity"], \
+  }
+  std::vector<std::string> tails_commod_change;
+  
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *\
+  *
+  * TODO Continue here
+  *
+  */
+
 
   #pragma cyclus var {							\
     "default": 0.003, "tooltip": "tails assay",				\
